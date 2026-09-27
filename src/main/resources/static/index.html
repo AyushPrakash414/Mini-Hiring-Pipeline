@@ -34,7 +34,7 @@
                 <input 
                     type="text" 
                     id="search-input" 
-                    placeholder="Type candidate name (e.g. 'ayufh', 'sharam', 'priya')..." 
+                    placeholder="Search name (e.g. 'ayusf', 'will smith') or ask NL ('Who is in Interview right now?')..." 
                     autocomplete="off"
                 />
                 <button id="search-btn" class="btn btn-primary">
@@ -42,14 +42,23 @@
                 </button>
             </div>
 
-            <!-- Quick Typo Suggestions -->
+            <!-- Quick Typo & NL Suggestions -->
             <div class="suggestions-container">
-                <span class="suggestion-label">Try fuzzy queries:</span>
-                <button class="chip" data-query="ayufh">ayufh <span>(→ Ayush)</span></button>
-                <button class="chip" data-query="sharam">sharam <span>(→ Sharma)</span></button>
-                <button class="chip" data-query="priya sharm">priya sharm</button>
-                <button class="chip" data-query="ankit">ankit</button>
-                <button class="chip" data-query="kumar">kumar</button>
+                <span class="suggestion-label">Try Name &amp; NL queries:</span>
+                <button class="chip chip-name" data-query="ayusf">👤 ayusf <span>(→ Ayush)</span></button>
+                <button class="chip chip-name" data-query="will smith">👤 will smith</button>
+                <button class="chip chip-nl" data-query="Who is in Interview right now?">🤖 Who is in Interview right now?</button>
+                <button class="chip chip-nl" data-query="Show all rejected candidates">🤖 Show all rejected candidates</button>
+                <button class="chip chip-nl" data-query="Candidates with > 5 years exp">🤖 Candidates with > 5 years exp</button>
+            </div>
+
+            <!-- OpenNLP Router Inspector Panel (Dynamic) -->
+            <div id="router-inspector" class="router-inspector" style="display: none;">
+                <div class="router-badge-row">
+                    <span id="router-intent-badge" class="badge"></span>
+                    <span id="router-explanation" class="router-explanation"></span>
+                </div>
+                <div id="router-tags-container" class="router-tags-container"></div>
             </div>
         </section>
 

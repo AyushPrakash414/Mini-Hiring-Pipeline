@@ -3,8 +3,10 @@ package com.Mini_Hiring_Pipeline.Hiring_pipeline.controller;
 import com.Mini_Hiring_Pipeline.Hiring_pipeline.model.Candidate;
 import com.Mini_Hiring_Pipeline.Hiring_pipeline.model.CandidateStage;
 import com.Mini_Hiring_Pipeline.Hiring_pipeline.model.CandidateStageHistory;
+import com.Mini_Hiring_Pipeline.Hiring_pipeline.model.QueryRouteResponse;
 import com.Mini_Hiring_Pipeline.Hiring_pipeline.repository.CandidateSearchResult;
 import com.Mini_Hiring_Pipeline.Hiring_pipeline.service.CandidateService;
+import com.Mini_Hiring_Pipeline.Hiring_pipeline.service.OpenNlpQueryRouterService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,9 +19,20 @@ import java.util.Map;
 public class CandidateController {
 
     private final CandidateService candidateService;
+    private final OpenNlpQueryRouterService queryRouterService;
 
-    public CandidateController(CandidateService candidateService) {
+    public CandidateController(CandidateService candidateService, OpenNlpQueryRouterService queryRouterService) {
         this.candidateService = candidateService;
+        this.queryRouterService = queryRouterService;
+    }
+
+    /**
+     * Route and classify search query using Apache OpenNLP POS Tagger.
+     */
+    @GetMapping("/route-query")
+    public ResponseEntity<QueryRouteResponse> routeQuery(@RequestParam("query") String query) {
+        QueryRouteResponse response = queryRouterService.routeQuery(query);
+        return ResponseEntity.ok(response);
     }
 
     /**

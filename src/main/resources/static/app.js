@@ -68,12 +68,19 @@ async function fetchAllCandidates() {
     }
 }
 
+// Router DOM elements
+const routerInspector = document.getElementById('router-inspector');
+const routerIntentBadge = document.getElementById('router-intent-badge');
+const routerExplanation = document.getElementById('router-explanation');
+const routerTagsContainer = document.getElementById('router-tags-container');
+
 /**
- * Perform Typo-Tolerant Trigram Search
+ * Perform Search with Apache OpenNLP Query Intent Routing
  */
 async function performSearch() {
     const query = searchInput.value.trim();
     if (!query) {
+        if (routerInspector) routerInspector.style.display = 'none';
         fetchAllCandidates();
         return;
     }
@@ -81,15 +88,30 @@ async function performSearch() {
     resultsList.innerHTML = `
         <div class="empty-placeholder">
             <div class="placeholder-icon">⏳</div>
-            <p class="placeholder-title">Searching...</p>
+            <p class="placeholder-title">Classifying &amp; Searching...</p>
         </div>
     `;
 
     try {
-        const res = await fetch(`${API_BASE}/search?query=${encodeURIComponent(query)}&limit=20`);
-        if (!res.ok) throw new Error('Search failed with status: ' + res.status);
-        const results = await res.json();
-        renderCandidateList(Array.isArray(results) ? results : [], true);
+        // Step 1: Query Intent Routing via Apache OpenNLP POS Tagger
+        const routeRes = await fetch(`${API_BASE}/route-query?query=${encodeURIComponent(query)}`);
+        if (!routeRes.ok) throw new Error('Routing failed with status: ' + routeRes.status);
+        const routeData = await routeRes.json();
+
+        // Render OpenNLP Inspector Bar
+        renderRouterInspector(routeData);
+
+        // Step 2: Branch based on Intent
+        if (routeData.intent === 'NAME_SEARCH') {
+            // Execute PostgreSQL pg_trgm fuzzy candidate search
+            const searchRes = await fetch(`${API_BASE}/search?query=${encodeURIComponent(query)}&limit=20`);
+            if (!searchRes.ok) throw new Error('Search failed with status: ' + searchRes.status);
+            const candidates = await searchRes.json();
+            renderCandidateList(Array.isArray(candidates) ? candidates : [], true);
+        } else {
+            // Natural Language Intent Mode
+            renderNaturalLanguageMode(routeData);
+        }
     } catch (err) {
         console.error(err);
         resultsList.innerHTML = `
@@ -101,6 +123,63 @@ async function performSearch() {
         `;
         showToast('Search query failed');
     }
+}
+
+/**
+ * Render the OpenNLP Router Inspector Pills and Intent Badge
+ */
+function renderRouterInspector(routeData) {
+    if (!routerInspector) return;
+    routerInspector.style.display = 'block';
+
+    const isName = routeData.intent === 'NAME_SEARCH';
+    routerIntentBadge.className = isName ? 'badge badge-name-intent' : 'badge badge-nl-intent';
+    routerIntentBadge.innerHTML = isName ? '👤 Candidate Name Search' : '🤖 Natural Language Query';
+    
+    routerExplanation.textContent = routeData.explanation || '';
+
+    // Render POS Tag pills
+    if (routeData.tokenTags && routeData.tokenTags.length > 0) {
+        routerTagsContainer.innerHTML = routeData.tokenTags.map(t => {
+            const pillClass = t.noun ? 'pos-tag-pill is-noun' : 'pos-tag-pill is-non-noun';
+            return `
+                <div class="${pillClass}" title="${t.tagDescription || t.tag}">
+                    <span class="pos-tag-name">${escapeHtml(t.token)}</span>
+                    <span class="pos-tag-badge">${escapeHtml(t.tag)}</span>
+                </div>
+            `;
+        }).join('');
+    } else {
+        routerTagsContainer.innerHTML = '';
+    }
+}
+
+/**
+ * Render UI when query is classified as Natural Language
+ */
+function renderNaturalLanguageMode(routeData) {
+    resultsCount.textContent = `NL Mode`;
+
+    resultsList.innerHTML = `
+        <div class="nl-preview-card">
+            <h3>🤖 Natural Language Intent Detected</h3>
+            <p><strong>Query:</strong> "${escapeHtml(routeData.originalQuery)}"</p>
+            <p>${escapeHtml(routeData.explanation)}</p>
+            <div style="margin-top: 16px; padding: 12px; background: rgba(0,0,0,0.25); border-radius: 8px; font-size: 13px;">
+                <p style="color: #a78bfa; margin-bottom: 6px; font-weight: 600;">OpenNLP POS Grammatical Structure:</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    ${routeData.tokenTags.map(t => `
+                        <span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: ${t.noun ? 'rgba(59,130,246,0.2)' : 'rgba(236,72,153,0.2)'}; color: ${t.noun ? '#93c5fd' : '#f472b6'};">
+                            <strong>${escapeHtml(t.token)}</strong> (${escapeHtml(t.tag)}: ${escapeHtml(t.tagDescription)})
+                        </span>
+                    `).join('')}
+                </div>
+            </div>
+            <p style="margin-top: 14px; font-size: 12px; color: var(--text-muted);">
+                ✨ Ready for LLM processing (NL-to-SQL / Candidate Filtering pipeline).
+            </p>
+        </div>
+    `;
 }
 
 /**
