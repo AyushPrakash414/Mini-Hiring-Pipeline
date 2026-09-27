@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Hiring Pipeline | Candidate Search & Pipeline</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-brand">
+                <div class="logo-icon">🚀</div>
+                <div>
+                    <h1>Mini Hiring Pipeline</h1>
+                    <p class="subtitle">PostgreSQL Trigram (pg_trgm) Typo-Tolerant Search & Audit Trail</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="btn-seed-data" class="btn btn-secondary btn-sm">
+                    <span>⚡</span> Seed Demo Candidates
+                </button>
+            </div>
+        </header>
+
+        <!-- Search Bar Section -->
+        <section class="search-section">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    placeholder="Type candidate name (e.g. 'ayufh', 'sharam', 'priya')..." 
+                    autocomplete="off"
+                />
+                <button id="search-btn" class="btn btn-primary">
+                    <span>Search</span>
+                </button>
+            </div>
+
+            <!-- Quick Typo Suggestions -->
+            <div class="suggestions-container">
+                <span class="suggestion-label">Try fuzzy queries:</span>
+                <button class="chip" data-query="ayufh">ayufh <span>(→ Ayush)</span></button>
+                <button class="chip" data-query="sharam">sharam <span>(→ Sharma)</span></button>
+                <button class="chip" data-query="priya sharm">priya sharm</button>
+                <button class="chip" data-query="ankit">ankit</button>
+                <button class="chip" data-query="kumar">kumar</button>
+            </div>
+        </section>
+
+        <!-- Main Content Area: Split View -->
+        <main class="content-grid">
+            <!-- Left Panel: Search Results List -->
+            <section class="results-panel">
+                <div class="panel-header">
+                    <h2>Matching Candidates</h2>
+                    <span id="results-count" class="badge badge-neutral">0 found</span>
+                </div>
+
+                <div id="results-list" class="results-list">
+                    <div class="empty-placeholder">
+                        <div class="placeholder-icon">🔎</div>
+                        <p class="placeholder-title">Search for candidates</p>
+                        <p class="placeholder-text">Type any partial or misspelled name above to test PostgreSQL's trigram similarity search.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Candidate Details & History Card -->
+            <section class="details-panel">
+                <div class="panel-header">
+                    <h2>Candidate Profile & Audit Trail</h2>
+                </div>
+
+                <div id="details-container">
+                    <div class="empty-placeholder">
+                        <div class="placeholder-icon">👤</div>
+                        <p class="placeholder-title">No Candidate Selected</p>
+                        <p class="placeholder-text">Click on any candidate from the search results to view their profile, stage status, and complete timeline audit history.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
