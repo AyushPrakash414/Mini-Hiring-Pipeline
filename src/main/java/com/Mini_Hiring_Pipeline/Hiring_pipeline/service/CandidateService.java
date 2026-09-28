@@ -48,7 +48,7 @@ public class CandidateService {
      */
     @Transactional
     public Candidate transitionStage(Long candidateId, CandidateStage targetStage, String reason) {
-        Candidate candidate = candidateRepository.findById(candidateId)
+        Candidate candidate = candidateRepository.findByIdWithLock(candidateId)
                 .orElseThrow(() -> new IllegalArgumentException("Candidate not found with id: " + candidateId));
 
         CandidateStage currentStage = candidate.getCurrentStage();
@@ -111,5 +111,22 @@ public class CandidateService {
     @Transactional(readOnly = true)
     public List<Candidate> getAllCandidates() {
         return candidateRepository.findAll();
+    }
+
+    /**
+     * Retrieves all candidates grouped by their current stage.
+     * Guaranteed to contain all CandidateStage keys even when a stage has 0 candidates.
+     */
+    @Transactional(readOnly = true)
+    public java.util.Map<CandidateStage, List<Candidate>> getCandidatesGroupedByStage() {
+        java.util.Map<CandidateStage, List<Candidate>> grouped = new java.util.EnumMap<>(CandidateStage.class);
+        for (CandidateStage stage : CandidateStage.values()) {
+            grouped.put(stage, new java.util.ArrayList<>());
+        }
+        List<Candidate> all = candidateRepository.findAll();
+        for (Candidate c : all) {
+            grouped.get(c.getCurrentStage()).add(c);
+        }
+        return grouped;
     }
 }

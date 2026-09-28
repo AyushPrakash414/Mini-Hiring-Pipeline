@@ -17,6 +17,10 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long> {
 
     List<Candidate> findByCurrentStage(CandidateStage currentStage);
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM Candidate c WHERE c.id = :id")
+    Optional<Candidate> findByIdWithLock(@Param("id") Long id);
+
     /**
      * Typo-tolerant fuzzy candidate search using PostgreSQL pg_trgm.
      * Combines whole-string similarity and word-level similarity so single-word typos
@@ -29,6 +33,7 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long> {
             c.email::text AS email,
             c.phone AS phone,
             c.current_stage::text AS currentStage,
+            c.stage_started_at AS stageStartedAt,
             c.created_at AS createdAt,
             ROUND(GREATEST(
                 similarity(lower(c.name), lower(:query)),

@@ -21,8 +21,12 @@ public class Candidate {
     private String phone;
 
     @Enumerated(EnumType.STRING)
+    @org.hibernate.annotations.JdbcType(org.hibernate.dialect.type.PostgreSQLEnumJdbcType.class)
     @Column(name = "current_stage", nullable = false)
     private CandidateStage currentStage = CandidateStage.APPLIED;
+
+    @Column(name = "stage_started_at", nullable = false)
+    private OffsetDateTime stageStartedAt = OffsetDateTime.now();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();
@@ -38,6 +42,7 @@ public class Candidate {
         this.email = email;
         this.phone = phone;
         this.currentStage = CandidateStage.APPLIED;
+        this.stageStartedAt = OffsetDateTime.now();
         this.createdAt = OffsetDateTime.now();
         this.updatedAt = OffsetDateTime.now();
     }
@@ -81,7 +86,24 @@ public class Candidate {
 
     public void setCurrentStage(CandidateStage currentStage) {
         this.currentStage = currentStage;
+        this.stageStartedAt = OffsetDateTime.now();
         this.updatedAt = OffsetDateTime.now();
+    }
+
+    public OffsetDateTime getStageStartedAt() {
+        return stageStartedAt;
+    }
+
+    public void setStageStartedAt(OffsetDateTime stageStartedAt) {
+        this.stageStartedAt = stageStartedAt;
+    }
+
+    @Transient
+    public Long getTimeInCurrentStageSeconds() {
+        if (stageStartedAt == null) {
+            return 0L;
+        }
+        return Math.max(0L, java.time.Duration.between(stageStartedAt, OffsetDateTime.now()).getSeconds());
     }
 
     public OffsetDateTime getCreatedAt() {

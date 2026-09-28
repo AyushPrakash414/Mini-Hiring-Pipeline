@@ -29,12 +29,15 @@ CREATE TABLE IF NOT EXISTS candidates (
     email           CITEXT              NOT NULL,
     phone           VARCHAR(32),
     current_stage   candidate_stage     NOT NULL DEFAULT 'APPLIED',
+    stage_started_at TIMESTAMPTZ        NOT NULL DEFAULT clock_timestamp(),
     created_at      TIMESTAMPTZ         NOT NULL DEFAULT clock_timestamp(),
     updated_at      TIMESTAMPTZ         NOT NULL DEFAULT clock_timestamp(),
 
     CONSTRAINT uq_candidates_email UNIQUE (email),
     CONSTRAINT chk_candidates_name_non_empty CHECK (length(trim(name)) > 0)
 );
+
+ALTER TABLE candidates ADD COLUMN IF NOT EXISTS stage_started_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp();
 
 -- ============================================================================
 -- 2. CANDIDATE STAGE HISTORY (Append-Only Audit Trail)

@@ -15,10 +15,12 @@ public class CandidateStageHistory {
     private Long candidateId;
 
     @Enumerated(EnumType.STRING)
+    @org.hibernate.annotations.JdbcType(org.hibernate.dialect.type.PostgreSQLEnumJdbcType.class)
     @Column(name = "from_stage")
     private CandidateStage fromStage;
 
     @Enumerated(EnumType.STRING)
+    @org.hibernate.annotations.JdbcType(org.hibernate.dialect.type.PostgreSQLEnumJdbcType.class)
     @Column(name = "to_stage", nullable = false)
     private CandidateStage toStage;
 

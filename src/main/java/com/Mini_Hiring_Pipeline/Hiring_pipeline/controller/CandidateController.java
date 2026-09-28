@@ -3,9 +3,11 @@ package com.Mini_Hiring_Pipeline.Hiring_pipeline.controller;
 import com.Mini_Hiring_Pipeline.Hiring_pipeline.model.Candidate;
 import com.Mini_Hiring_Pipeline.Hiring_pipeline.model.CandidateStage;
 import com.Mini_Hiring_Pipeline.Hiring_pipeline.model.CandidateStageHistory;
+import com.Mini_Hiring_Pipeline.Hiring_pipeline.model.LlmSecurityResponse;
 import com.Mini_Hiring_Pipeline.Hiring_pipeline.model.QueryRouteResponse;
 import com.Mini_Hiring_Pipeline.Hiring_pipeline.repository.CandidateSearchResult;
 import com.Mini_Hiring_Pipeline.Hiring_pipeline.service.CandidateService;
+import com.Mini_Hiring_Pipeline.Hiring_pipeline.service.NaturalLanguageQueryPipelineService;
 import com.Mini_Hiring_Pipeline.Hiring_pipeline.service.OpenNlpQueryRouterService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,10 +22,15 @@ public class CandidateController {
 
     private final CandidateService candidateService;
     private final OpenNlpQueryRouterService queryRouterService;
+    private final NaturalLanguageQueryPipelineService nlQueryPipelineService;
 
-    public CandidateController(CandidateService candidateService, OpenNlpQueryRouterService queryRouterService) {
+    public CandidateController(
+            CandidateService candidateService, 
+            OpenNlpQueryRouterService queryRouterService,
+            NaturalLanguageQueryPipelineService nlQueryPipelineService) {
         this.candidateService = candidateService;
         this.queryRouterService = queryRouterService;
+        this.nlQueryPipelineService = nlQueryPipelineService;
     }
 
     /**
@@ -32,6 +39,22 @@ public class CandidateController {
     @GetMapping("/route-query")
     public ResponseEntity<QueryRouteResponse> routeQuery(@RequestParam("query") String query) {
         QueryRouteResponse response = queryRouterService.routeQuery(query);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Process Natural Language Query through multi-layered security and read-only execution.
+     */
+    @PostMapping("/nl-query")
+    public ResponseEntity<LlmSecurityResponse> processNlQueryPost(@RequestBody Map<String, String> body) {
+        String query = body.getOrDefault("query", "");
+        LlmSecurityResponse response = nlQueryPipelineService.processQuery(query);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/nl-query")
+    public ResponseEntity<LlmSecurityResponse> processNlQueryGet(@RequestParam("query") String query) {
+        LlmSecurityResponse response = nlQueryPipelineService.processQuery(query);
         return ResponseEntity.ok(response);
     }
 
@@ -71,15 +94,25 @@ public class CandidateController {
     }
 
     /**
+     * Get all candidates grouped by pipeline stage.
+     */
+    @GetMapping("/pipeline")
+    public ResponseEntity<Map<CandidateStage, List<Candidate>>> getPipelineGrouped() {
+        return ResponseEntity.ok(candidateService.getCandidatesGroupedByStage());
+    }
+
+    /**
      * Register a new candidate.
      */
     @PostMapping
-    public ResponseEntity<Candidate> registerCandidate(@RequestBody Map<String, String> payload) {
-        String name = payload.get("name");
-        String email = payload.get("email");
-        String phone = payload.get("phone");
-        Candidate created = candidateService.registerCandidate(name, email, phone);
-        return ResponseEntity.ok(created);
+    public ResponseEntity<Candidate> registerCandidate(
+            @jakarta.validation.Valid @RequestBody com.Mini_Hiring_Pipeline.Hiring_pipeline.dto.CandidateCreateRequest request) {
+        Candidate created = candidateService.registerCandidate(
+                request.getName(),
+                request.getEmail(),
+                request.getPhone()
+        );
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(created);
     }
 
     /**
@@ -88,10 +121,12 @@ public class CandidateController {
     @PostMapping("/{id}/transition")
     public ResponseEntity<Candidate> transitionStage(
             @PathVariable("id") Long id,
-            @RequestBody Map<String, String> payload) {
-        CandidateStage targetStage = CandidateStage.valueOf(payload.get("targetStage"));
-        String reason = payload.get("reason");
-        Candidate updated = candidateService.transitionStage(id, targetStage, reason);
+            @jakarta.validation.Valid @RequestBody com.Mini_Hiring_Pipeline.Hiring_pipeline.dto.StageTransitionRequest request) {
+        Candidate updated = candidateService.transitionStage(
+                id,
+                request.getTargetStage(),
+                request.getReason()
+        );
         return ResponseEntity.ok(updated);
     }
 

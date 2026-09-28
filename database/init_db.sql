@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS candidates (
     email           CITEXT              NOT NULL,
     phone           VARCHAR(32),
     current_stage   candidate_stage     NOT NULL DEFAULT 'APPLIED',
+    stage_started_at TIMESTAMPTZ        NOT NULL DEFAULT clock_timestamp(),
     created_at      TIMESTAMPTZ         NOT NULL DEFAULT clock_timestamp(),
     updated_at      TIMESTAMPTZ         NOT NULL DEFAULT clock_timestamp(),
 

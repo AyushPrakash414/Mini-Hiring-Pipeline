@@ -8,6 +8,7 @@ public interface CandidateSearchResult {
     String getEmail();
     String getPhone();
     String getCurrentStage();
+    Instant getStageStartedAt();
     Instant getCreatedAt();
     Double getSimilarityScore();
 }
