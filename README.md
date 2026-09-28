@@ -24,6 +24,8 @@ A full-stack hiring pipeline application built with **Spring Boot 4**, **Postgre
 
 ## Architecture Overview
 
+![System Architecture](docs/architecture_diagram.jpg)
+
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                        React Frontend                            │
